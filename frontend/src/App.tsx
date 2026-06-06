@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Capture from './pages/Capture';
 import Documents from './pages/Documents';
 import Review from './pages/Review';
+import Search from './pages/Search';
 import Layout from './components/Layout';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -23,6 +24,7 @@ function App() {
         <Route path="/capture" element={<ProtectedRoute><Capture /></ProtectedRoute>} />
         <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
         <Route path="/documents/:id" element={<ProtectedRoute><Review /></ProtectedRoute>} />
+        <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

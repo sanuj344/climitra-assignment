@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
@@ -6,7 +6,7 @@ from app.models import RoleEnum, DocumentStatusEnum
 
 # Authentication
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class Token(BaseModel):
