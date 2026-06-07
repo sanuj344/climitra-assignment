@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import api from '../lib/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -12,32 +13,21 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:8000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Invalid credentials');
-      }
-
-      const data = await response.json();
+      const response = await api.post('/auth/login', { email, password });
+      const data = response.data;
       
       // Fetch user profile to get role
-      const profileResponse = await fetch('http://localhost:8000/api/auth/me', {
+      const profileResponse = await api.get('/auth/me', {
         headers: {
           Authorization: `Bearer ${data.access_token}`
         }
       });
-      const profileData = await profileResponse.json();
+      const profileData = profileResponse.data;
 
       setAuth(data.access_token, profileData.role);
       navigate('/');
     } catch (err: any) {
-      setError(err.message);
+      setError(err.response?.data?.detail || err.message || 'Invalid credentials');
     }
   };
 

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/authStore';
+import api from '../lib/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { FileText, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
@@ -11,15 +12,8 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/dashboard/stats', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data);
-        }
+        const response = await api.get('/dashboard/stats');
+        setStats(response.data);
       } catch (err) {
         console.error("Failed to fetch dashboard stats", err);
       } finally {

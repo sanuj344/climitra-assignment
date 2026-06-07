@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { Check, X, AlertTriangle, Edit2, Save, History } from 'lucide-react';
+import api from '../lib/api';
+import { Check, X, Edit2, Save, History } from 'lucide-react';
 
 const Review = () => {
   const { id } = useParams();
@@ -9,62 +10,46 @@ const Review = () => {
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
-  const token = useAuthStore(state => state.token);
   const role = useAuthStore(state => state.role);
   const navigate = useNavigate();
 
-  const fetchDoc = async () => {
+  const fetchDoc = useCallback(async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/documents/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) setDoc(await res.json());
+      const res = await api.get(`/documents/${id}`);
+      setDoc(res.data);
       
-      const auditRes = await fetch(`http://localhost:8000/api/audit/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (auditRes.ok) setAuditLogs(await auditRes.json());
+      const auditRes = await api.get(`/audit/${id}`);
+      setAuditLogs(auditRes.data);
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
-    fetchDoc();
-  }, [id, token]);
+    if (id) {
+      fetchDoc();
+    }
+  }, [fetchDoc, id]);
 
   const handleApprove = async () => {
-    await fetch(`http://localhost:8000/api/documents/${id}/approve`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await api.post(`/documents/${id}/approve`);
     navigate('/documents');
   };
 
   const handleReject = async () => {
-    await fetch(`http://localhost:8000/api/documents/${id}/reject`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await api.post(`/documents/${id}/reject`);
     navigate('/documents');
   };
 
   const handleSaveCorrection = async (fieldName: string) => {
-    await fetch(`http://localhost:8000/api/documents/${id}/correct`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` 
-      },
-      body: JSON.stringify({ field_name: fieldName, new_value: editValue })
-    });
+    await api.post(`/documents/${id}/correct`, { field_name: fieldName, new_value: editValue });
     setEditingField(null);
     fetchDoc(); // Refresh to get updated fields and audit logs
   };
 
   if (!doc) return <div className="p-8 text-center text-gray-500">Loading document...</div>;
 
-  const imagePath = doc.images?.[0]?.file_path ? `http://localhost:8000/${doc.images[0].file_path}` : null;
+  const imagePath = doc.images?.[0]?.file_path ? `${import.meta.env.VITE_API_URL.replace('/api', '')}/${doc.images[0].file_path}` : null;
 
   return (
     <div className="space-y-6">

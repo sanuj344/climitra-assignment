@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import api from '../lib/api';
 import { Search, Eye, Clock, CheckCircle, XCircle, FileText } from 'lucide-react';
 
 const Documents = () => {
@@ -12,13 +13,8 @@ const Documents = () => {
   useEffect(() => {
     const fetchDocs = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/documents', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setDocuments(data);
-        }
+        const response = await api.get('/documents');
+        setDocuments(response.data);
       } catch (err) {
         console.error(err);
       } finally {

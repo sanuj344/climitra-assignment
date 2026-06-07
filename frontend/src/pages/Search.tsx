@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import api from '../lib/api';
 import { Search as SearchIcon, Eye, Filter } from 'lucide-react';
 
 const STATUS_OPTIONS = ['', 'processing', 'review_required', 'approved', 'rejected'];
@@ -13,7 +13,6 @@ const Search = () => {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const token = useAuthStore(state => state.token);
   const navigate = useNavigate();
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -28,14 +27,11 @@ const Search = () => {
       if (dateFrom) params.append('date_from', dateFrom);
       if (dateTo) params.append('date_to', dateTo);
 
-      const res = await fetch(`http://localhost:8000/api/documents?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        let data = await res.json();
+      const res = await api.get(`/documents?${params.toString()}`);
+      let data = res.data;
 
-        // Client-side filter by status (since our basic GET /documents doesn't filter yet)
-        if (status) data = data.filter((d: any) => d.status === status);
+      // Client-side filter by status (since our basic GET /documents doesn't filter yet)
+      if (status) data = data.filter((d: any) => d.status === status);
 
         // Filter by vehicle number from extracted fields
         if (query) {
@@ -56,7 +52,6 @@ const Search = () => {
         }
 
         setResults(data);
-      }
     } catch (err) {
       console.error(err);
     } finally {

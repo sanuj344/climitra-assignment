@@ -1,7 +1,7 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState } from 'react';
 import { Camera, Upload, WifiOff, Wifi, RefreshCw } from 'lucide-react';
 import { db } from '../lib/db';
-import { useAuthStore } from '../store/authStore';
+import api from '../lib/api';
 
 const Capture = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -10,7 +10,6 @@ const Capture = () => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [syncing, setSyncing] = useState(false);
-  const token = useAuthStore(state => state.token);
 
   // Monitor network status
   React.useEffect(() => {
@@ -93,19 +92,9 @@ const Capture = () => {
     formData.append('file', blob, `capture_${Date.now()}.jpg`);
 
     try {
-      const response = await fetch('http://localhost:8000/api/documents/upload', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        body: formData
-      });
-      if (response.ok) {
-        alert('Upload successful!');
-        setCapturedImage(null);
-      } else {
-        throw new Error('Upload failed');
-      }
+      await api.post('/documents/upload', formData);
+      alert('Upload successful!');
+      setCapturedImage(null);
     } catch (error) {
       console.error(error);
       // Fallback to offline storage if upload fails
@@ -129,17 +118,8 @@ const Capture = () => {
         const formData = new FormData();
         formData.append('file', item.imageBlob, `offline_capture_${item.id}.jpg`);
         
-        const response = await fetch('http://localhost:8000/api/documents/upload', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          body: formData
-        });
-
-        if (response.ok) {
-          await db.captures.delete(item.id!);
-        }
+        await api.post('/documents/upload', formData);
+        await db.captures.delete(item.id!);
       } catch (err) {
         console.error(`Failed to sync item ${item.id}`, err);
       }
