@@ -7,6 +7,7 @@ from app.models import User
 from app.security import verify_password, create_access_token
 from app.config import settings
 from app.deps import get_current_active_user
+from app.logger import logger
 
 router = APIRouter()
 
@@ -14,6 +15,7 @@ router = APIRouter()
 def login_for_access_token(login_data: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == login_data.email).first()
     if not user or not verify_password(login_data.password, user.password_hash):
+        logger.warning(f"Failed login attempt for email: {login_data.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -23,6 +25,7 @@ def login_for_access_token(login_data: LoginRequest, db: Session = Depends(get_d
     access_token = create_access_token(
         data={"sub": str(user.id), "role": user.role}, expires_delta=access_token_expires
     )
+    logger.info(f"Successful login for user: {user.id}")
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me", response_model=UserResponse)

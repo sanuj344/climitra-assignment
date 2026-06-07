@@ -4,6 +4,7 @@ from app.database import get_db
 from app.models import Document, ExtractedField, AuditLog, DocumentStatusEnum, User
 from app.schemas import CorrectFieldRequest, ExtractedFieldResponse
 from app.deps import get_current_active_user
+from app.logger import logger
 
 router = APIRouter()
 
@@ -37,6 +38,8 @@ def correct_field(
     db.add(audit_log)
     db.commit()
     db.refresh(field)
+    
+    logger.info(f"User {current_user.id} corrected field {request.field_name} in doc {document_id} from {old_value} to {request.new_value}")
     return field
 
 @router.post("/{document_id}/approve")
@@ -60,6 +63,8 @@ def approve_document(
     )
     db.add(audit_log)
     db.commit()
+    
+    logger.info(f"User {current_user.id} approved document {document_id}")
     return {"message": "Document approved"}
 
 @router.post("/{document_id}/reject")
@@ -83,4 +88,6 @@ def reject_document(
     )
     db.add(audit_log)
     db.commit()
+    
+    logger.info(f"User {current_user.id} rejected document {document_id}")
     return {"message": "Document rejected"}
